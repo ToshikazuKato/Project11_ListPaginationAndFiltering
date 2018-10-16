@@ -7,29 +7,30 @@ FSJS project 2 - List Filter and Pagination
   //the number of students you want to display at a time
   const limitNum = 10;
   //the collection of students object
-  const students = document.getElementsByClassName('student-item');
-
+  const stuObj = document.getElementsByClassName('student-item');
+  //convert stuObj into array
+  const students = Object.keys(stuObj).map(val => stuObj[val]);
 //------------------------------ Define all functions ------------------------------
 
 //Display 10 students in the list depending on pagination and hide the rest of students
-const displayStudents = (startAt, endAt) => {
-  //Convert collection of object into array and hide all students
-  const stuArr = Object.keys(students).map(val => students[val]);
-  stuArr.map(obj=>{
+const displayStudents = (startAt, endAt, stu) => {
+  //hide all students
+  students.map(obj=>{
     return obj.style.display = 'none';
   });
-  //Display only 10 students depending on paginations
-  const displayStu = stuArr.slice(startAt,endAt);
-  displayStu.map(obj => {
-    return obj.style.display = 'block';
-  });
+    //Display only 10 students depending on paginations
+    const displayStu = stu.slice(startAt,endAt);
+    displayStu.map(obj => {
+      return obj.style.display = 'block';
+    });
+
 }
 
 //Calculate the number of necessary pagination from students list length
 //and create li elements for pagination
-const generatePaginationHTML = (limit) => {
+const generatePaginationHTML = (limit, stu) => {
   //calculate page num
-  const pageNum = (students.length%limit === 0 ? (students.length/limit) : Math.floor(students.length/limit)+1);
+  const pageNum = (stu.length%limit === 0 ? (stu.length/limit) : Math.floor(stu.length/limit)+1);
   //Create <div class="pagination"></div>
   const pageDiv = document.createElement('div');
   pageDiv.className = 'pagination';
@@ -50,7 +51,11 @@ const generatePaginationHTML = (limit) => {
   const studentUl = document.getElementsByClassName('student-list')[0];
   page.insertBefore(pageDiv,studentUl.nextSibling);
   //Add 'active' class to the first asynchronous
-  document.querySelector("a").className = 'active';
+  const a = document.querySelector("a");
+  if(a !== null){
+    a.className = 'active';
+  }
+
 }
 
 //Toggle active class when it's clicked
@@ -63,26 +68,25 @@ const toggleActiveClass = (e) => {
 
 //Change displayed students when page changes
 //Parameter => the number of page passed from click event
-const managedisplayedStudents = (num) => {
+const managedisplayedStudents = (num, stu) => {
   //For the second argument used in slice method to extract 10 students from lists
   const endAt = num*limitNum;
   //For the first argument in slice method
   const startAt = endAt - limitNum;
-  displayStudents(startAt, endAt);
+  displayStudents(startAt, endAt, stu);
 }
 
 // Click event for pagination buttons
-const clickEventForPagination = () => {
+const clickEventForPagination = (stu) => {
   //Select all asynchronous
   const pageLinks = document.querySelectorAll('a');
   Array.from(pageLinks).forEach(eachLink => {
     eachLink.addEventListener('click',(e)=>{
       e.preventDefault();
-      console.log(e);
       toggleActiveClass(e);
       // Get the number of clicked pagination
       const pagination = e.target.innerHTML;
-      managedisplayedStudents(pagination);
+      managedisplayedStudents(pagination,stu);
     });//eachLink
   })
 }//clickEventForPagination
@@ -112,19 +116,67 @@ const generateSearchHTML = () => {
 
 }
 
-//Search function, display the specific students as the user types
-const searchFunction = () => {
-  
+//Delete previous error
+const delError = () => {
+  const errorLi = document.querySelectorAll('.error');
+  errorLi.forEach(ele => ele.remove());
 }
 
-//Init function to display necessary information
-const init = () => {
-  generateSearchHTML();
-  displayStudents(0,limitNum);
-  generatePaginationHTML(limitNum);
-  clickEventForPagination();
+//Display error message
+const errMessage = () =>{
+
+  delError();
+
+  const li = document.createElement('li');
+  li.className = 'student-item cf error';
+  const div = document.createElement('div');
+  div.className = 'student-details';
+  const error = document.createElement('h3');
+  error.innerHTML = "No match";
+  div.appendChild(error);
+  li.appendChild(div);
+  document.getElementsByClassName('student-list')[0].appendChild(li);
+}
+
+//Search function, display the specific students as the user types
+const searchFunction = () => {
+  const input = document.querySelector('input');
+  const studentsName = document.querySelectorAll('h3');
+  const studentNameArr = Object.keys(studentsName).map((val,index) => {
+    return studentsName[index].innerHTML.toLowerCase().replace(/\s/g,"");
+  });
+  const stuArr = Object.keys(students).map(val => students[val]);
+
+  input.addEventListener('keyup',(e) => {
+    e.preventDefault();
+    delError();
+    const typing = input.value.toLowerCase();
+    let newStuArr = [];
+    studentNameArr.forEach((val,index) => {
+      if( val.indexOf(typing) > -1 ){
+        newStuArr.push(stuArr[index]);
+      }
+    });
+    init(newStuArr);
+    console.log(newStuArr.length);
+    if(newStuArr.length === 0){
+      errMessage();
+    }
+
+  });
+
+}
+
+//Init function to display necessary information and implement functions
+const init = (arr) => {
+  displayStudents(0,limitNum, arr);
+  document.querySelectorAll('.pagination').forEach(ele => ele.remove());
+  generatePaginationHTML(limitNum,arr);
+  clickEventForPagination(arr);
 }
 
 
 //------------------------------ Call function ------------------------------
-init();
+generateSearchHTML();
+searchFunction();
+init(students);
