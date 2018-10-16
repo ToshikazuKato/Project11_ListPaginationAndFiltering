@@ -5,11 +5,15 @@ FSJS project 2 - List Filter and Pagination
 
 //------------------------------ Define variables ------------------------------
   //the number of students you want to display at a time
+  
+  //The number of students you want to display at each page
   const limitNum = 10;
   //the collection of students object
   const stuObj = document.getElementsByClassName('student-item');
   //convert stuObj into array
   const students = Object.keys(stuObj).map(val => stuObj[val]);
+
+
 //------------------------------ Define all functions ------------------------------
 
 //Display 10 students in the list depending on pagination and hide the rest of students
@@ -142,23 +146,22 @@ const errMessage = () =>{
 const searchFunction = () => {
   const input = document.querySelector('input');
   const studentsName = document.querySelectorAll('h3');
+  // Creat an array for students name without space
   const studentNameArr = Object.keys(studentsName).map((val,index) => {
     return studentsName[index].innerHTML.toLowerCase().replace(/\s/g,"");
   });
-  const stuArr = Object.keys(students).map(val => students[val]);
 
   input.addEventListener('keyup',(e) => {
     e.preventDefault();
     delError();
-    const typing = input.value.toLowerCase();
     let newStuArr = [];
+    const typing = input.value.toLowerCase();
     studentNameArr.forEach((val,index) => {
       if( val.indexOf(typing) > -1 ){
-        newStuArr.push(stuArr[index]);
+        newStuArr.push(students[index]);
       }
     });
     init(newStuArr);
-    console.log(newStuArr.length);
     if(newStuArr.length === 0){
       errMessage();
     }
@@ -170,6 +173,7 @@ const searchFunction = () => {
 //Init function to display necessary information and implement functions
 const init = (arr) => {
   displayStudents(0,limitNum, arr);
+  //Delete previous pagination
   document.querySelectorAll('.pagination').forEach(ele => ele.remove());
   generatePaginationHTML(limitNum,arr);
   clickEventForPagination(arr);
